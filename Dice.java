@@ -512,6 +512,15 @@ public class Dice extends JFrame {
       Dice dice = new Dice();
    }
    
+   /*
+   here will follow the horror that is all the other classes that I need to make this program 'work'
+   I apologize in advance
+   The order of the group goes: Macro button (e.g. dice rolls, melee attack) Action Listeners, 
+                                Keyboard listeners, skill check listeners,
+                                Player classes (in progess), whatever else we add  
+   
+   */
+   
    //action listener classes
    public class d4ActListener implements ActionListener {
       public d4ActListener() {}
@@ -779,7 +788,7 @@ public class Dice extends JFrame {
       System.exit(0);
    }
    
-   
+   //skill checkls. Buckle, this'll take a while
    public class strengthMenuListener implements ActionListener {
       public  strengthMenuListener() {}
       public void actionPerformed(ActionEvent e) {
@@ -949,6 +958,7 @@ public class Dice extends JFrame {
       }
    }
    
+   //Player classes (note: actually put this in later)
    
 }
          
