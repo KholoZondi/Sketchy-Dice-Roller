@@ -1,0 +1,6 @@
+Player object stuff:
+Name: String
+Class: String
+Base six states (dex, strength, etc): int
+initiative mod: int
+max hp: int

@@ -33,17 +33,25 @@ public class Dice extends JFrame {
    //instance variable and list field
    private String Notes; //the file to save for notes
    
-   //modifiers
-   private int strength = -1;
+   //modifiers these are mine (Kholo)
+   private int strength = 1;
    private int dex = 2;
-   private int con = 2+2;
+   private int con = 2;
    private int intelligence = 1;
    private int wisdom = 1;
    private int charisma = 1;
    private int prof = 2;
+   private int hp = 24;
+   private int init = 2;
 
    private int [] mainStates = {strength, dex, con, intelligence, wisdom, charisma};
-
+   
+   //other players
+   private Player Kathleen;
+   private Player Kholo;
+   private Player Megan;
+   private Player Shannon;
+   private Player Frank;
    
    //adders
    private int acrobatics = 2; private int animalHandling = 1; private int arcana = 1; private int athletics = -1; private int deception = 3; private int history = 1; private int insight = 1; 
@@ -140,6 +148,14 @@ public class Dice extends JFrame {
       preDice.setBackground(theme);
       setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
       setVisible(true);
+      
+      //creating Players
+      Kathleen = new Player("Demiah", "Wizard", 1, 1, 1, 1, 1, 1, 1, 1, 1);
+      Kholo = new Player("Jharc'h", "Rogue", strength, dex, con, intelligence, wisdom, charisma, prof, hp, init);
+      Megan = new Player("Elf", "Elf",  1, 1, 1, 1, 1, 1, 1, 1, 1);
+      Shannon = new Player("Monker", "Cleric", 1, 1, 1, 1, 1, 1, 1, 1, 1);
+      Frank = new Player("Fergl", "Bard", 1, 2, 2, 2, -1, 3, 2, 15, 2);
+      
       
       //adding panels and buttons and other crap
       noteSection.add(scrollPane1);
@@ -341,9 +357,8 @@ public class Dice extends JFrame {
       messageField.append("Enter in number of combatans below\n");
       
    }
-
+   /* old methjods. moved on to greener pastures
    public String[] getNames() {
-//       manIn.setText("   Names:\n");
       System.out.println("Enter names\n");
       String [] names = input.nextLine().split(",");
       System.out.println("check 3");
@@ -358,7 +373,6 @@ public class Dice extends JFrame {
       return players;
    }
    public String[] getEnemies() {
-//       manIn.setText("   Names:\n");
       System.out.println("Enter enemy names\n");
       String [] names = input.nextLine().split(",");
       System.out.println("check 3.2");
@@ -374,7 +388,7 @@ public class Dice extends JFrame {
       
       return enemies;
    }
-
+   */
    
    public String enterHit() {
       String data = manIn.getText().trim().replace("\n","");
@@ -518,6 +532,7 @@ public class Dice extends JFrame {
    The order of the group goes: Macro button (e.g. dice rolls, melee attack) Action Listeners, 
                                 Keyboard listeners, skill check listeners,
                                 Player classes (in progess), whatever else we add  
+                                testity test
    
    */
    
@@ -582,7 +597,7 @@ public class Dice extends JFrame {
 //             add(namesPanel);
 //             System.out.println("Panels added");
             manualInput.append("    Initiative rolled\n"); System.out.println("check 1"); setState(JFrame.ICONIFIED);
-            adderer();
+            adderer();              //yes i know it's a horrible name
 //             addPlayers();
 //             addEnemies();
             System.out.println("Return to program window");
@@ -959,6 +974,22 @@ public class Dice extends JFrame {
    }
    
    //Player classes (note: actually put this in later)
+   public class Player {
+      private String name;
+      private String Class;
+      private int strength, dex, con, intelligence, wisdom, charisma, prof, hp, initiative;
+      
+      public Player (String name, String Class, int str, int dex, int con, int intel, int wis, int cha, int prof, int hp, int init) {
+         this.name = name; this.Class = Class; this.strength = str; this.dex = dex; this.con = con; this.intelligence = intel;
+         this.wisdom = wis; this.charisma = cha; this.prof = prof; this.hp = hp; this.initiative = init;
+      }
+      
+      public String toString() {
+         return name;
+      }
+   
+   
+   }
    
 }
          
