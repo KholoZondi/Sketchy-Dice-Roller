@@ -27,6 +27,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.FileOutputStream;
+import java.util.Set;
+import java.util.HashSet;
 
 public class Dice extends JFrame {
 
@@ -46,12 +48,15 @@ public class Dice extends JFrame {
 
    private int [] mainStates = {strength, dex, con, intelligence, wisdom, charisma};
    
-   //other players
-   private Player Kathleen;
-   private Player Kholo;
-   private Player Megan;
-   private Player Shannon;
-   private Player Frank;
+   //creating other player objects
+   private Player Kathleen = new Player("Kathleen","Demiah", "Wizard", 1, 1, 1, 1, 1, 1, 1, 1, 50);
+   private Player Kholo = new Player("Kholo","Jharc'h", "Rogue", strength, dex, con, intelligence, wisdom, charisma, prof, hp, init);
+   private Player Megan = new Player("Megan","Elf", "Elf",  1, 1, 1, 1, 1, 1, 1, 1, 1);
+   private Player Shannon = new Player("Shannon","Monker", "Cleric", 1, 1, 1, 1, 1, 1, 1, 1, -20);
+   private Player Frank = new Player("Frank","Fergl", "Bard", 1, 2, 2, 2, -1, 3, 2, 15, 2);
+   private Set<String> playerNames = Set.of("Kathleen", "Kholo","Megan","Shannon","Frank");
+   Player [] playerObjects = {Kathleen, Kholo, Megan, Shannon, Frank};
+
    
    //adders
    private int acrobatics = 2; private int animalHandling = 1; private int arcana = 1; private int athletics = -1; private int deception = 3; private int history = 1; private int insight = 1; 
@@ -72,9 +77,9 @@ public class Dice extends JFrame {
    public boolean combatantsGotten = false;
    public boolean lessThanTwenty = false;
    public boolean numberCheck;
-   private String [] players;
-   private String [] enemies;
-   private String [] combatants;
+   private ArrayList<String> players = new ArrayList<String>();
+   private ArrayList<String> enemies = new ArrayList<String>();
+   private ArrayList<String> combatants = new ArrayList<String>();
    private ArrayList<String> initOrder = new ArrayList<String>();
    
    private JPanel noteSection = new JPanel(); //notes panel
@@ -148,14 +153,7 @@ public class Dice extends JFrame {
       preDice.setBackground(theme);
       setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
       setVisible(true);
-      
-      //creating Players
-      Kathleen = new Player("Demiah", "Wizard", 1, 1, 1, 1, 1, 1, 1, 1, 1);
-      Kholo = new Player("Jharc'h", "Rogue", strength, dex, con, intelligence, wisdom, charisma, prof, hp, init);
-      Megan = new Player("Elf", "Elf",  1, 1, 1, 1, 1, 1, 1, 1, 1);
-      Shannon = new Player("Monker", "Cleric", 1, 1, 1, 1, 1, 1, 1, 1, 1);
-      Frank = new Player("Fergl", "Bard", 1, 2, 2, 2, -1, 3, 2, 15, 2);
-      
+            
       
       //adding panels and buttons and other crap
       noteSection.add(scrollPane1);
@@ -291,13 +289,13 @@ public class Dice extends JFrame {
 //       int n = getNames().length;
       int value;
       TreeMap<Integer,String> fullInfo = new TreeMap<Integer, String>();
-      for (int i=0;i<this.players.length;i++) {
+      for (int i=0;i<this.players.size();i++) {
          do { value = rand.nextInt(21); }
          while (value ==0 || (numbers.contains(value)) ); 
          numbers.add(value);
-         fullInfo.put(value,players[i]);
+         fullInfo.put(value,players.get(i));
       }
-      System.out.println(Arrays.toString(players)+"\n"+numbers.toString());
+      System.out.println(String.join(",,", players)+"\n"+numbers.toString());
       System.out.println(fullInfo.descendingMap());
       for (int key : fullInfo.descendingMap().keySet() ) {
          System.out.print(key+"  "+ fullInfo.get(key).trim() +" | ");
@@ -310,13 +308,13 @@ public class Dice extends JFrame {
 //       int n = getEnemies().length;
       int value;
       TreeMap<Integer,String> fullInfo = new TreeMap<Integer, String>();
-      for (int i=0;i<this.enemies.length;i++) {
+      for (int i=0;i<this.enemies.size();i++) {
          do { value = rand.nextInt(21); }
          while (value ==0 || (numbers.contains(value)) ); 
          numbers.add(value);
-         fullInfo.put(value,enemies[i]);
+         fullInfo.put(value,enemies.get(i));
       }
-      System.out.println(Arrays.toString(enemies)+"\n"+numbers.toString());
+      System.out.println(String.join(",,",enemies)+"\n"+numbers.toString());
       System.out.println(fullInfo.descendingMap());
       for (int key : fullInfo.descendingMap().keySet() ) {
          System.out.print(key+"  "+ fullInfo.get(key).trim() +" | ");
@@ -324,17 +322,60 @@ public class Dice extends JFrame {
       }
       initiative = true;
    }
-   public void addCombatants() { 
+   public void addCombatants() { //gonna need to break up combatants array into cells
+      TreeMap<Integer,String> fullInfo = new TreeMap<Integer, String>(); //will hold the player/monster and final dice roll, basically a dictionary
       ArrayList<Integer> numbers = new ArrayList<Integer>();
       int value;
-      TreeMap<Integer,String> fullInfo = new TreeMap<Integer, String>();
-      for (int i=0;i<this.combatants.length;i++) {
+
+
+      for (int i=0; i< combatants.size(); i++) {
+         String [] cells = combatants.get(i).trim().split(" ");
+         System.out.println("------------------------------");
+         System.out.println("Combatant "+combatants.get(i)+" accounted for\n");
+         do { value = rand.nextInt(21); }     //re-rolls if we get zero or if we've already rolled the value
+         while (value == 0 || (numbers.contains(value)) ); 
+
+         if (cells.length > 1) { //tests to see if there is another element with the name (e.g [2,Kath's-Dragon]
+            System.out.println(cells[1]+" has initiative modifier "+cells[0]);
+            System.out.println("----------------------------------");
+            
+            value = value + Integer.valueOf(cells[0]);
+            fullInfo.put(value, cells[1]);
+         } 
+         else { //here we'll add modifiers for player characters  
+            if (playerNames.contains(cells[0])) {  //is it is a player
+               for (Player placeHolder: playerObjects) {
+                  if (placeHolder.equals(cells[0])) {
+                     System.out.println("\nMatch Found  "+placeHolder.toString()+"  mod=  "+placeHolder.initiative);
+                     value = value + placeHolder.initiative;
+                  }
+               }
+            
+            fullInfo.put(value, cells[0]);  
+            }
+         }
+      }   
+      //actually making the init order
+      System.out.println("\nInitiative order is as follows\n");
+      for (int key : fullInfo.descendingMap().keySet() ) {
+      System.out.print(key+"  "+ fullInfo.get(key).trim() +" | ");
+      initOrder.add(fullInfo.get(key).trim());
+
+      }
+      initiative = true;      
+   }   
+
+      
+      
+      /*
+      //if no modifiers to add
+      for (int i=0;i<this.combatants.size();i++) {
          do { value = rand.nextInt(21); }
          while (value ==0 || (numbers.contains(value)) ); 
          numbers.add(value);
-         fullInfo.put(value,combatants[i]);
+         fullInfo.put(value,combatants.get(i));
       }
-      System.out.println(Arrays.toString(combatants)+"\n"+numbers.toString());
+      System.out.println(String.join(",,",combatants)+"\n"+numbers.toString());
       System.out.println(fullInfo.descendingMap());
       for (int key : fullInfo.descendingMap().keySet() ) {
          System.out.print(key+"  "+ fullInfo.get(key).trim() +" | ");
@@ -342,11 +383,38 @@ public class Dice extends JFrame {
       }
       initiative = true;         
    }
-   public String [] getInputFromUser() {
+   */
+   
+   public String [] getInputFromUser() {  //general method for whenever need input via input panel, 
+                                          //will need to check if input is preceded by a number                                        
+      Set<String> returnList = new HashSet<String>();
+      
       String [] names = inputField.getText().split(",");
-      inputField.setText("    ");
       messageField.setText("You have entered in\n"+Arrays.toString(names)+"\n\n");
       System.out.println("We got em\n"+Arrays.toString(names));
+      
+/* this is how we analyse user input, just decided to test it here. the real things in the addCombatants() function
+      String [] rawInput = inputField.getText().split(",");
+      inputField.setText("    ");
+      for (int i=0; i<rawInput.length; i++) {
+         String[] cells = rawInput[i].trim().split(" ");
+         System.out.println(rawInput[i]);
+         if (cells.length > 1) {  //tests to see if there is another element with the name
+            System.out.println("length greater than 1\n"+ rawInput[i]+"\n");
+            
+         }
+         else {  //this should only happen if the cell is a player or has no initiative
+            if (playerNames.contains(cells[0])) {  //is it is a player
+               for (String placeHolder: playerNames) {
+                  System.out.println(placeHolder+"\nNAME FOUND\n");
+                  
+               
+               }
+            }
+         }
+      }
+*/
+      inputField.setText("    ");
       return (names);
    }
    
@@ -619,6 +687,9 @@ public class Dice extends JFrame {
 //             System.out.println("Panels added");
             initiative = false;
             initOrder.clear();
+            players.clear();
+            enemies.clear();
+            combatants.clear();
             System.out.println("\n\n"+initOrder);
             currentInit = -1;
             manualInput.append("    Ending Initiative\n");
@@ -691,7 +762,8 @@ public class Dice extends JFrame {
          else {
             if (!combatantsGotten && lessThanTwenty) {
                System.out.println("Less than twenty");
-               combatants = getInputFromUser();
+               Collections.addAll(combatants, getInputFromUser());
+//                combatants = getInputFromUser();
                messageField.append("Coolios.\n");
                enemiesGotten = true;
                playersGotten = true;
@@ -703,14 +775,16 @@ public class Dice extends JFrame {
                messageField.append("Enter in all combatants\n");
                if (!lessThanTwenty) {
                   System.out.println("More than twenty");
-                  players = getInputFromUser();
+                  Collections.addAll(players, getInputFromUser());
+//                   players = getInputFromUser();
                   messageField.append("Enter in the enemy names now\n");
                   playersGotten = true;
                   addPlayers();
                }
             }
             else if (!enemiesGotten && !lessThanTwenty) {
-               enemies = getInputFromUser();
+               Collections.addAll(enemies, getInputFromUser());
+//                enemies = getInputFromUser();
                messageField.append("Coolios.\n");
                enemiesGotten = true;
                addEnemies();
@@ -975,22 +1049,29 @@ public class Dice extends JFrame {
    
    //Player classes (note: actually put this in later)
    public class Player {
+      private String playerName;
       private String name;
       private String Class;
-      private int strength, dex, con, intelligence, wisdom, charisma, prof, hp, initiative;
+      public int strength, dex, con, intelligence, wisdom, charisma, prof, hp, initiative;
       
-      public Player (String name, String Class, int str, int dex, int con, int intel, int wis, int cha, int prof, int hp, int init) {
+      public Player (String pN,String name, String Class, int str, int dex, int con, int intel, int wis, int cha, int prof, int hp, int init) {
          this.name = name; this.Class = Class; this.strength = str; this.dex = dex; this.con = con; this.intelligence = intel;
-         this.wisdom = wis; this.charisma = cha; this.prof = prof; this.hp = hp; this.initiative = init;
+         this.wisdom = wis; this.charisma = cha; this.prof = prof; this.hp = hp; this.initiative = init; this.playerName = pN;
       }
       
       public String toString() {
          return name;
       }
-   
+      
+      public boolean equals(String o) {
+         if (this.playerName.equals(o)) {
+            return true; }
+         else { return false; }
+      }
    
    }
    
 }
          
       
+//e.g   2 Minion-4, Kathleen, 

@@ -4,3 +4,23 @@ Class: String
 Base six states (dex, strength, etc): int
 initiative mod: int
 max hp: int
+
+   private int strength = -1;
+   private int dex = 2;
+   private int con = 2;
+   private int intelligence = 1;
+   private int wisdom = 1;
+   private int charisma = 1;
+   private int prof = 2;
+
+for initiative:
+check number of combatants
+check which player characters are involved in fight
+if less than 20:
+	putt all combatants into one pool, roll init with modifiers
+if more than 20:
+	seperate combatants intto 2 pools, roll init with modifiers
+either way:
+	format of names added to pool are so
+
+ MODIFIER NAME-DESIGNATION  e.g: 2 Minion-4
