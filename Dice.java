@@ -707,6 +707,7 @@ public class Dice extends JFrame {
          if (!initiative) {
             manualInput.append("     Initiative is not active\n"); }
          else {
+            System.out.println( "------------------------  "+currentInit);
             manualInput.append("    "+initOrder.get(currentInit)+" has recieved initiative.\n"); 
          }
          if (currentInit == initOrder.size()-1) {currentInit=0;}
