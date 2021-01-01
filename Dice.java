@@ -54,7 +54,7 @@ public class Dice extends JFrame {
    private Player Megan = new Player("Megan","Elf", "Elf",  1, 1, 1, 1, 1, 1, 1, 1, 1);
    private Player Shannon = new Player("Shannon","Monker", "Cleric", 1, 1, 1, 1, 1, 1, 1, 1, -20);
    private Player Frank = new Player("Frank","Fergl", "Bard", 1, 2, 2, 2, -1, 3, 2, 15, 2);
-   private Set<String> playerNames = Set.of("Kathleen", "Kholo","Megan","Shannon","Frank");
+   private Set<String> playerNames = Set.of(Kathleen.playerName, Kholo.playerName, Megan.playerName, Shannon.playerName, Frank.playerName);
    Player [] playerObjects = {Kathleen, Kholo, Megan, Shannon, Frank};
 
    
@@ -71,6 +71,7 @@ public class Dice extends JFrame {
    public static final int HEIGHT = 720;
    public String kathleen;
    public boolean initiative = false;
+   public boolean initFrameVisible = false;
    public boolean namesGotten = false;
    public boolean playersGotten = false;
    public boolean enemiesGotten = false;
@@ -89,10 +90,10 @@ public class Dice extends JFrame {
    private JPanel preDice = new JPanel(); //pre made dice (1d20, 1d8, etc)
    private JPanel manualInp = new JPanel(); //manual input field
    private JTextArea notesTextArea = new JTextArea (25,38);
-   private JTextArea manualInput = new JTextArea(14,36);
-   private JTextArea manIn = new JTextArea(1,36);
+   private JTextArea manualInputResults = new JTextArea(14,36);  //the text area that displays dice roll results
+   private JTextArea manIn = new JTextArea(1,36);  //the text field where you type dice roll inputs
    private JScrollPane scrollPane1 = new JScrollPane(notesTextArea);
-   private JScrollPane scrollPane2 = new JScrollPane(manualInput);
+   private JScrollPane scrollPane2 = new JScrollPane(manualInputResults);
    
    private JFrame nameFrame = new JFrame("Input Panel");
    private JPanel namesPanel = new JPanel();
@@ -147,9 +148,9 @@ public class Dice extends JFrame {
       noteSection.setBackground(theme);
       notesTextArea.setBackground(textTheme);
       manualInp.setBackground(theme);
-      manualInput.setEditable(false);
+      manualInputResults.setEditable(false);
       manIn.setBackground(theme);
-      manualInput.setBackground(textTheme);
+      manualInputResults.setBackground(textTheme);
       preDice.setBackground(theme);
       setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
       setVisible(true);
@@ -191,7 +192,7 @@ public class Dice extends JFrame {
       preDice.add(saveButton);
       manualInp.setLayout(new BorderLayout());
       manIn.setFont(manIn.getFont().deriveFont(20f));
-      manualInput.setFont(manualInput.getFont().deriveFont(20f));
+      manualInputResults.setFont(manualInputResults.getFont().deriveFont(20f));
 
       //setting up input frame
       inputField.setBackground(theme);
@@ -207,7 +208,9 @@ public class Dice extends JFrame {
       namesPanel.add(doneButton, BorderLayout.SOUTH);
       nameFrame.setLayout(new BorderLayout());
       nameFrame.add(namesPanel, BorderLayout.CENTER);      
+      inputField.addKeyListener(enterListener);
       
+      //back to main window
       manualInp.add(manIn, BorderLayout.NORTH);
       manualInp.add(scrollPane2, BorderLayout.SOUTH);
       setLayout(new BorderLayout());
@@ -220,7 +223,7 @@ public class Dice extends JFrame {
       manIn.append(" ");
       
       //painfully dull adding the listeners
-      manIn.addKeyListener(listener);
+      manIn.addKeyListener(enterListener);
 //       inputField.addKeyListener(listener2);
       
       doneButton.addActionListener(new doneButtonListener());
@@ -281,7 +284,7 @@ public class Dice extends JFrame {
          }
          saver.close();     
       }  
-      catch (FileNotFoundException e) {System.out.println("Save failed"); manualInput.append("File save failed\n");}
+      catch (FileNotFoundException e) {System.out.println("Save failed"); manualInputResults.append("File save failed\n");}
    }
    public void addPlayers() { //where the actual initive order is made
       System.out.println("check 2");
@@ -332,26 +335,41 @@ public class Dice extends JFrame {
          String [] cells = combatants.get(i).trim().split(" ");
          System.out.println("------------------------------");
          System.out.println("Combatant "+combatants.get(i)+" accounted for\n");
-         do { value = rand.nextInt(21); }     //re-rolls if we get zero or if we've already rolled the value
-         while (value == 0 || (numbers.contains(value)) ); 
+         int tempModifier = 99;
+         try { 
+            tempModifier = Integer.valueOf(cells[0]); //see if the input included a modifier
+         }
+         catch (NumberFormatException e) {
+            for (Player temp : playerObjects) {
+               if (temp.equals(cells[0])) {tempModifier = temp.initiative; System.out.println("MATCHCHES FOUDES"); }
+            }
+         }
+         System.out.println("THE MATCHING MODIFIER IS "+tempModifier);
+         do { value = rand.nextInt(21); System.out.println("Reroll?");}     //re-rolls if we get zero or if we've already rolled the value
+         while (value == 0 || (numbers.contains(value-tempModifier)) ); 
 
          if (cells.length > 1) { //tests to see if there is another element with the name (e.g [2,Kath's-Dragon]
             System.out.println(cells[1]+" has initiative modifier "+cells[0]);
             System.out.println("----------------------------------");
             
             value = value + Integer.valueOf(cells[0]);
+            numbers.add(value);
+            System.out.println("Shit getting added: "+value+"  "+ cells[1]);
             fullInfo.put(value, cells[1]);
          } 
          else { //here we'll add modifiers for player characters  
+         String tempName = "DEFAULT";
             if (playerNames.contains(cells[0])) {  //is it is a player
                for (Player placeHolder: playerObjects) {
                   if (placeHolder.equals(cells[0])) {
                      System.out.println("\nMatch Found  "+placeHolder.toString()+"  mod=  "+placeHolder.initiative);
+                     tempName = placeHolder.toString();
                      value = value + placeHolder.initiative;
+                     numbers.add(value);
                   }
                }
-            
-            fullInfo.put(value, cells[0]);  
+            System.out.println("Shit getting added: "+value+"  "+ tempName);
+            fullInfo.put(value, tempName);  
             }
          }
       }   
@@ -389,9 +407,13 @@ public class Dice extends JFrame {
                                           //will need to check if input is preceded by a number                                        
       Set<String> returnList = new HashSet<String>();
       
-      String [] names = inputField.getText().split(",");
-      messageField.setText("You have entered in\n"+Arrays.toString(names)+"\n\n");
-      System.out.println("We got em\n"+Arrays.toString(names));
+      String [] temp2 = inputField.getText().split(",");
+      String [] returnArray = inputField.getText().split(",");
+      for (int i=0; i< temp2.length; i++) { 
+         returnArray[i] = returnArray[i].trim();
+      }
+      messageField.setText("You have entered in\n"+Arrays.toString(returnArray)+"\n\n");
+      System.out.println("We got em\n"+Arrays.toString(returnArray));
       
 /* this is how we analyse user input, just decided to test it here. the real things in the addCombatants() function
       String [] rawInput = inputField.getText().split(",");
@@ -415,12 +437,13 @@ public class Dice extends JFrame {
       }
 */
       inputField.setText("    ");
-      return (names);
+      return (returnArray);
    }
    
    public void adderer() { 
       this.setVisible(false);
       nameFrame.setVisible(true);
+      initFrameVisible = true;
       inputField.setText("    ");
       messageField.append("Enter in number of combatans below\n");
       
@@ -458,43 +481,62 @@ public class Dice extends JFrame {
    }
    */
    
-   public String enterHit() {
-      String data = manIn.getText().trim().replace("\n","");
-      System.out.println("data= "+data);
-      if (!data.contains("+")) {data = data.substring(0, data.length()-1) + "+0]";}
-      String mult;
+   public String enterHitDice() {
       int multiplier;
-      String die;
+      int die;
+      int adder;
       String result="";
-      if (data.contains("[") && data.contains("]")) {
-         mult = Character.toString(data.charAt(1));
-         if (mult.equals("d")) {multiplier = 1;}
-         else {multiplier = Integer.valueOf(mult); System.out.println("mult = "+Integer.valueOf(mult));}
-         int dI = data.indexOf("d");
-         int addI = data.indexOf("+");
-         die = data.substring(dI+1, addI); System.out.println("die= "+die);
-         String add = data.substring(addI+1, data.length()-1); System.out.println("add= "+add);
-
-         switch (Integer.parseInt(die)) {
-            case 4: result = d4(multiplier, Integer.parseInt(add));System.out.println(4);break;
-            case 6: result = d6(multiplier,Integer.parseInt(add)); System.out.println("result= "+result); break;
-            case 8: result = d8(multiplier, Integer.parseInt(add));System.out.println(8);break;
-            case 10: result = d10(multiplier, Integer.parseInt(add));System.out.println(10);break;
-            case 12: result = d12(multiplier, Integer.parseInt(add));System.out.println(12);break;
-            case 20: result = d20(multiplier, Integer.parseInt(add));System.out.println(20);break;
-            case 100: result = d100(multiplier, Integer.parseInt(add));System.out.println(100);break;
+      
+      //test which panel is visible to see what eneter should do
+      if (!(initFrameVisible)) { //if frame for initiative is not active
+         
+                
+         String data = manIn.getText().trim().replace("\n","");
+         System.out.println("data= "+data);
+         if (!data.contains("+")) {data = data.substring(0, data.length()-1) + "+0]";} //if there is no + something
+         if (Character.toString(data.charAt(1)).equals("d")) {data = "1"+data;} //if there is no multiplier
+         System.out.println(data);
+         if (data.contains("[") && data.contains("]")) {
+            String temp4 = data.replace("[","").replace("]","");
+            String [] dataSplit = temp4.split("d"); //[10d8+4] becomes ["10", "8+4"],  [d8+4] becomes [, "8+4"]
+            System.out.println(Arrays.toString(dataSplit));
+            multiplier = Integer.valueOf(dataSplit[0]); 
+            //so... for some reason, Java doesn't like using "+" as a delimeter so this monstrosity is here 
+            System.out.println(multiplier); dataSplit[1] = dataSplit[1].replace("+","  "); System.out.println(dataSplit[1]);
+            String [] temp5 = dataSplit[1].split("  ");
+            die = Integer.parseInt(temp5[0]); //i convert to int's using 4 diff methods. 
+            adder = Integer.valueOf(temp5[1]);
+            
+            System.out.println("die= "+die);
+            System.out.println("add= "+adder);
+   
+            switch (die) {
+               case 4: result = d4(multiplier, adder);break;
+               case 6: result = d6(multiplier, adder); System.out.println("result= "+result); break;
+               case 8: result = d8(multiplier, adder);break;
+               case 10: result = d10(multiplier, adder);break;
+               case 12: result = d12(multiplier, adder);break;
+               case 20: result = d20(multiplier, adder);break;
+               case 100: result = d100(multiplier, adder);break;
+            }
+            if (adder ==0) {dieRoll = multiplier+"d"+die; System.out.println("dieRoll= "+dieRoll);}
+            else {dieRoll = multiplier+"d"+die+"+"+adder; System.out.println("dieRoll= "+dieRoll);}
          }
-         if (Integer.parseInt(add) ==0) {dieRoll = multiplier+"d"+die; System.out.println("dieRoll= "+dieRoll);}
-         else {dieRoll = multiplier+"d"+die+"+"+add; System.out.println("dieRoll= "+dieRoll);}
+         else {System.out.println("invalid input"); }
+         manIn.setText("       ");
+         
+         }
+      else if (initFrameVisible) { //if the initiative frame is active. just runs same code as done button
+         doneButtonListener arbitraryListener = new doneButtonListener();
+         arbitraryListener.simulateDoneButton();
       }
-      else {System.out.println("invalid input"); }
-      manIn.setText("       ");
       return result;
    }
       
    public void setDiceVis() {
       nameFrame.setVisible(false);
       this.setVisible(true);   
+      initFrameVisible = false;
    }
    public String d6(int multiplier, int add) {
       int value;
@@ -608,43 +650,43 @@ public class Dice extends JFrame {
    public class d4ActListener implements ActionListener {
       public d4ActListener() {}
       public void actionPerformed(ActionEvent e) {
-         manualInput.append("    1d4 = "+String.valueOf(d4(1,0))+"\n");
+         manualInputResults.append("    1d4 = "+String.valueOf(d4(1,0))+"\n");
       }
    }
    public class d6ActListener implements ActionListener {
       public d6ActListener() {}
       public void actionPerformed(ActionEvent e) {
-         manualInput.append("    1d6 = "+String.valueOf(d6(1,0))+"\n");
+         manualInputResults.append("    1d6 = "+String.valueOf(d6(1,0))+"\n");
       }
    }
    public class d8ActListener implements ActionListener {
       public d8ActListener() {}
       public void actionPerformed(ActionEvent e) {
-         manualInput.append("    1d8 = "+String.valueOf(d8(1,0))+"\n");
+         manualInputResults.append("    1d8 = "+String.valueOf(d8(1,0))+"\n");
       }
    }
    public class d10ActListener implements ActionListener {
       public d10ActListener() {}
       public void actionPerformed(ActionEvent e) {
-         manualInput.append("    1d10 = "+String.valueOf(d10(1,0))+"\n");
+         manualInputResults.append("    1d10 = "+String.valueOf(d10(1,0))+"\n");
       }
    }
    public class d12ActListener implements ActionListener {
       public d12ActListener() {}
       public void actionPerformed(ActionEvent e) {
-         manualInput.append("    1d12 = "+String.valueOf(d12(1,0))+"\n");
+         manualInputResults.append("    1d12 = "+String.valueOf(d12(1,0))+"\n");
       }
    }
    public class d20ActListener implements ActionListener {
       public d20ActListener() {}
       public void actionPerformed(ActionEvent e) {
-         manualInput.append("    1d20 = "+String.valueOf(d20(1,0))+"\n");
+         manualInputResults.append("    1d20 = "+String.valueOf(d20(1,0))+"\n");
       }
    }
    public class d100ActListener implements ActionListener {
       public d100ActListener() {}
       public void actionPerformed(ActionEvent e) {
-         manualInput.append("    1d100 = "+String.valueOf(d100(1,0))+"\n");
+         manualInputResults.append("    1d100 = "+String.valueOf(d100(1,0))+"\n");
       }
    }
    
@@ -664,7 +706,7 @@ public class Dice extends JFrame {
 //             setVisible(false);
 //             add(namesPanel);
 //             System.out.println("Panels added");
-            manualInput.append("    Initiative rolled\n"); System.out.println("check 1"); setState(JFrame.ICONIFIED);
+            manualInputResults.append("    Initiative rolled\n"); System.out.println("check 1"); setState(JFrame.ICONIFIED);
             adderer();              //yes i know it's a horrible name
 //             addPlayers();
 //             addEnemies();
@@ -673,7 +715,7 @@ public class Dice extends JFrame {
             System.out.println("\n\n"+initOrder);
             if (currentInit < 0) {currentInit = 0;}
          }
-         else { manualInput.append("    Initiative already active\n"); }         
+         else { manualInputResults.append("    Initiative already active\n"); }         
       }
    }
    
@@ -692,23 +734,23 @@ public class Dice extends JFrame {
             combatants.clear();
             System.out.println("\n\n"+initOrder);
             currentInit = -1;
-            manualInput.append("    Ending Initiative\n");
+            manualInputResults.append("    Ending Initiative\n");
             enemiesGotten = false;
             playersGotten = false; 
             combatantsGotten = false; 
             numberCheck = false;
          } 
-         else { manualInput.append("     Initiative not active\n"); }
+         else { manualInputResults.append("     Initiative not active\n"); }
       }
    }
    public class nextCombatantListener implements ActionListener {
       public nextCombatantListener() {}
       public void actionPerformed(ActionEvent e) {
          if (!initiative) {
-            manualInput.append("     Initiative is not active\n"); }
+            manualInputResults.append("     Initiative is not active\n"); }
          else {
             System.out.println( "------------------------  "+currentInit);
-            manualInput.append("    "+initOrder.get(currentInit)+" has recieved initiative.\n"); 
+            manualInputResults.append("    "+initOrder.get(currentInit)+" has recieved initiative.\n"); 
          }
          if (currentInit == initOrder.size()-1) {currentInit=0;}
          else {currentInit++;}
@@ -719,51 +761,68 @@ public class Dice extends JFrame {
       public crossBowAttackListener() {}
       public void actionPerformed(ActionEvent e) {
       int addOn = 2;
-      manualInput.append("  Cross bow attack: 1d20+"+prof+"= "+d20(1,prof)+"\n   Damage: 1d10+4= "+d10(1,dex+prof)+"\n");
-      manualInput.append("    If Sneak: 2d6= "+d6(2,0)+"\n\n");
+      manualInputResults.append("  Cross bow attack: 1d20+"+prof+"= "+d20(1,prof)+"\n   Damage: 1d10+4= "+d10(1,dex+prof)+"\n");
+      manualInputResults.append("    If Sneak: 2d6= "+d6(2,0)+"\n\n");
       }
    }
    public class darkStabListener implements ActionListener {
       public darkStabListener() {}
       public void actionPerformed(ActionEvent e) {
       int addOn = 1; //specific to the dark dagger
-      manualInput.append("  Dark stabby stab: 1d20+"+prof+"= "+d20(1,prof+addOn)+"\n   Damage: 2d4+5= "+d4(2,dex+prof+addOn)+"\n");
-      manualInput.append("    If bonus action: 2d4= "+d4(2,0)+"\n");
-      manualInput.append("    If Sneak: 2d6= "+d6(2,0)+"\n\n");      
+      manualInputResults.append("  Dark stabby stab: 1d20+"+prof+"= "+d20(1,prof+addOn)+"\n   Damage: 2d4+5= "+d4(2,dex+prof+addOn)+"\n");
+      manualInputResults.append("    If bonus action: 2d4= "+d4(2,0)+"\n");
+      manualInputResults.append("    If Sneak: 2d6= "+d6(2,0)+"\n\n");      
       }
    }
    public class rapierListener implements ActionListener {
       public void actionPerformed(ActionEvent e) {
-         manualInput.append("  Rapier: 1d20+3= "+d20(1,3)+"\n   Damage: 1d8+"+(dex+prof)+"= "+d8(1,dex+prof)+"\n    If bonus action: 1d8= "+d8(1,0)+"\n");
-         manualInput.append("    If Sneak: 2d6= "+d6(2,0)+"\n\n");
+         manualInputResults.append("  Rapier: 1d20+3= "+d20(1,3)+"\n   Damage: 1d8+"+(dex+prof)+"= "+d8(1,dex+prof)+"\n    If bonus action: 1d8= "+d8(1,0)+"\n");
+         manualInputResults.append("    If Sneak: 2d6= "+d6(2,0)+"\n\n");
       }
    }
    public class healersKitListener implements ActionListener {
       public healersKitListener() {}
       public void actionPerformed(ActionEvent e) {
       int addOn = 1;
-      manualInput.append("  Healer's Kit:\n");
-      manualInput.append("    Medicine: 1d20+"+prof+"= "+d20(1,prof)+"\n");
-      manualInput.append("    Stabilize (1 use): Instant grants 1 hp to downed creatures\n");
-      manualInput.append("    Basic Heal (1 use): 1d6+4= "+d6(1,4)+"\n");
-      manualInput.append("    Awakened Mind Buff (3 uses): 12DC\n");
+      manualInputResults.append("  Healer's Kit:\n");
+      manualInputResults.append("    Medicine: 1d20+"+prof+"= "+d20(1,prof)+"\n");
+      manualInputResults.append("    Stabilize (1 use): Instant grants 1 hp to downed creatures\n");
+      manualInputResults.append("    Basic Heal (1 use): 1d6+4= "+d6(1,4)+"\n");
+      manualInputResults.append("    Awakened Mind Buff (3 uses): 12DC\n");
       
-      manualInput.append("\n");
+      manualInputResults.append("\n");
       }
    }
 
    public class doneButtonListener implements ActionListener {
       public doneButtonListener() {}
-      public void actionPerformed(ActionEvent e) {
-         if (!numberCheck) {
-            if (Integer.valueOf(inputField.getText().trim()) <=20) {lessThanTwenty = true; messageField.append("Enter in names now\n");}
+      void actionPerformedMethod() { 
+         if (!numberCheck) { 
+            if (Integer.valueOf(inputField.getText().trim()) <=20) {
+                  lessThanTwenty = true; messageField.append("Enter in names now\n");
+               }
             inputField.setText("    "); 
             numberCheck = true;
          }
          else {
             if (!combatantsGotten && lessThanTwenty) {
                System.out.println("Less than twenty");
-               Collections.addAll(combatants, getInputFromUser());
+               String [] temp3 = getInputFromUser(); //need to test if these all have initiative mods or are player names
+               System.out.println("array before: "+Arrays.toString(temp3));
+               for (int i=0; i<temp3.length;i++) {
+                  if (playerNames.contains(temp3[i])) {continue;}
+                  else if (temp3[i].split(" ").length ==1) { 
+                     try { 
+                         Integer.parseInt(temp3[i].split(" ")[0]); }
+                     catch(NumberFormatException errorCode) {
+                      temp3[i] = "0 "+temp3[i]; }
+                  }
+               }
+               System.out.println("array after "+Arrays.toString(temp3));
+
+               
+               
+               Collections.addAll(combatants, temp3);
 //                combatants = getInputFromUser();
                messageField.append("Coolios.\n");
                enemiesGotten = true;
@@ -794,17 +853,39 @@ public class Dice extends JFrame {
             if (playersGotten && enemiesGotten) {
                setDiceVis();
             }
-         }
+         }         
+      }
+      
+      public void actionPerformed(ActionEvent e) {
+         actionPerformedMethod();
+      }
+      void simulateDoneButton() { //this has to onyl run if enter was hit...
+      
+         actionPerformedMethod();
       }
    }
    //keyboard listener
-   KeyListener listener = new KeyListener() {
+   KeyListener enterListener = new KeyListener() {
       @Override
       public void keyPressed(KeyEvent event) {
 //           printEventInfo("Key Pressed", event);
-          if (enterPressed(event)) {
-            String forOrder = enterHit(); //because enterHit() has to run for dieRoll to work
-            manualInput.append("    "+dieRoll+" = "+forOrder+"\n");
+          
+          if (enterPressed(event)) {   System.out.println("Enter??");
+            if (!(initFrameVisible)) {
+               String forOrder = "";
+               if (!(manIn.getText().trim().equals(""))) { 
+                  forOrder = enterHitDice(); //because enterHitDice() has to run for dieRoll to work
+                  manualInputResults.append("    "+dieRoll+" = "+forOrder+"\n");
+   
+               }
+               else if (enterPressed(event)) {System.out.println("blank space"); 
+                  manIn.setText("   ");
+               }
+            }
+          
+            else if (initFrameVisible) {
+              enterHitDice();
+            }
           }
       }
       @Override
@@ -827,8 +908,9 @@ public class Dice extends JFrame {
                   + keyboardLocation(e.getKeyLocation()));
           System.out.println("    Action? " + e.isActionKey());
       }
-      public boolean enterPressed(KeyEvent e) {
+      public boolean enterPressed(KeyEvent e) { //tests if enter is hit
          boolean gg=false;
+//          enterTest
          if (e.getKeyCode() == 10) {System.out.println("Enter hit"); gg= true;}
          return gg;
       }
@@ -883,168 +965,168 @@ public class Dice extends JFrame {
       public  strengthMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Strength: "+d20(1,strength)+"\n");
+         manualInputResults.append("    Strength: "+d20(1,strength)+"\n");
       }
    }
    public class dexMenuListener implements ActionListener {
       public dexMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Dexterity: "+d20(1,dex)+"\n");
+         manualInputResults.append("    Dexterity: "+d20(1,dex)+"\n");
       }
    }
    public class conMenuListener implements ActionListener {
       public conMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Consitution: "+d20(1,con)+"\n" );
+         manualInputResults.append("    Consitution: "+d20(1,con)+"\n" );
       }
    }
    public class intelligenceMenuListener implements ActionListener {
       public intelligenceMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Intelligence: "+d20(1,intelligence)+"\n" );
+         manualInputResults.append("    Intelligence: "+d20(1,intelligence)+"\n" );
       }
    }
    public class wisdomMenuListener implements ActionListener {
       public wisdomMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Wisdom: "+d20(1,wisdom)+"\n");
+         manualInputResults.append("    Wisdom: "+d20(1,wisdom)+"\n");
       }
    }
    public class charismaMenuListener implements ActionListener {
       public charismaMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Charisma: "+d20(1,charisma)+"\n");
+         manualInputResults.append("    Charisma: "+d20(1,charisma)+"\n");
       }
    }
    public class acrobaticsMenuListener implements ActionListener {
       public acrobaticsMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Acrobatics: "+d20(1,strength)+"\n");
+         manualInputResults.append("    Acrobatics: "+d20(1,strength)+"\n");
       }
    }
    public class animalHMenuListener implements ActionListener {
       public animalHMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Animal Handling: "+d20(1,animalHandling)+"\n" );
+         manualInputResults.append("    Animal Handling: "+d20(1,animalHandling)+"\n" );
       }
    }
    public class arcanaMenuListener implements ActionListener {
       public arcanaMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Arcana: "+d20(1,arcana)+"\n" );
+         manualInputResults.append("    Arcana: "+d20(1,arcana)+"\n" );
       }
    }
    public class athleticsMenuListener implements ActionListener {
       public athleticsMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Athletics: "+d20(1,athletics)+"\n" );
+         manualInputResults.append("    Athletics: "+d20(1,athletics)+"\n" );
       }
    }
    public class deceptionMenuListener implements ActionListener {
       public deceptionMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Deception: "+d20(1,deception)+"\n" );
+         manualInputResults.append("    Deception: "+d20(1,deception)+"\n" );
       }
    }
    public class historyMenuListener implements ActionListener {
       public historyMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    History: "+d20(1,history)+"\n" );
+         manualInputResults.append("    History: "+d20(1,history)+"\n" );
       }
    }
    public class insightMenuListener implements ActionListener {
       public insightMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Insight: "+d20(1,strength)+"\n" );
+         manualInputResults.append("    Insight: "+d20(1,strength)+"\n" );
       }
    }
    public class intimidationMenuListener implements ActionListener {
       public intimidationMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Intimidation: "+d20(1,intimidation)+"\n" );
+         manualInputResults.append("    Intimidation: "+d20(1,intimidation)+"\n" );
       }
    }
    public class investigationMenuListener implements ActionListener {
       public investigationMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Investigation: "+d20(1,investigation)+"\n" );
+         manualInputResults.append("    Investigation: "+d20(1,investigation)+"\n" );
       }
    }
    public class medicineMenuListener implements ActionListener {
       public medicineMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Medicine: "+d20(1,medicine)+"\n" );
+         manualInputResults.append("    Medicine: "+d20(1,medicine)+"\n" );
       }
    }
    public class natureMenuListener implements ActionListener {
       public natureMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Nature: "+d20(1,nature)+"\n" );
+         manualInputResults.append("    Nature: "+d20(1,nature)+"\n" );
       }
    }
    public class perceptionMenuListener implements ActionListener {
       public perceptionMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Perception: "+d20(1,perception)+"\n" );
+         manualInputResults.append("    Perception: "+d20(1,perception)+"\n" );
       }
    }
    public class performanceMenuListener implements ActionListener {
       public performanceMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Performance: "+d20(1,performance)+"\n" );
+         manualInputResults.append("    Performance: "+d20(1,performance)+"\n" );
       }
    }
    public class persuasionMenuListener implements ActionListener {
       public persuasionMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Persuasion: "+d20(1,persuasion)+"\n" );
+         manualInputResults.append("    Persuasion: "+d20(1,persuasion)+"\n" );
       }
    }
    public class religionMenuListener implements ActionListener {
       public religionMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Religion: "+d20(1,religion)+"\n" );
+         manualInputResults.append("    Religion: "+d20(1,religion)+"\n" );
       }
    }
    public class sleightOHMenuListener implements ActionListener {
       public sleightOHMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Sleight of Hand: "+d20(1,sleightOfHand)+"\n" );
+         manualInputResults.append("    Sleight of Hand: "+d20(1,sleightOfHand)+"\n" );
       }
    }
    public class stealthMenuListener implements ActionListener {
       public stealthMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Stealth: "+d20(1,stealth)+"\n" );
+         manualInputResults.append("    Stealth: "+d20(1,stealth)+"\n" );
       }
    }
    public class survivalMenuListener implements ActionListener {
       public  survivalMenuListener() {}
       public void actionPerformed(ActionEvent e) {
          System.out.println("-");
-         manualInput.append("    Survival: "+d20(1,survival)+"\n" );
+         manualInputResults.append("    Survival: "+d20(1,survival)+"\n" );
       }
    }
    
