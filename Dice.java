@@ -287,49 +287,121 @@ public class Dice extends JFrame {
       catch (FileNotFoundException e) {System.out.println("Save failed"); manualInputResults.append("File save failed\n");}
    }
    public void addPlayers() { //where the actual initive order is made
-      System.out.println("check 2");
+      TreeMap<Integer,String> fullInfo = new TreeMap<Integer, String>(); //will hold the player and final dice roll, basically a dictionary
       ArrayList<Integer> numbers = new ArrayList<Integer>();
-//       int n = getNames().length;
       int value;
-      TreeMap<Integer,String> fullInfo = new TreeMap<Integer, String>();
-      for (int i=0;i<this.players.size();i++) {
-         do { value = rand.nextInt(21); }
-         while (value ==0 || (numbers.contains(value)) ); 
-         numbers.add(value);
-         fullInfo.put(value,players.get(i));
-      }
-      System.out.println(String.join(",,", players)+"\n"+numbers.toString());
-      System.out.println(fullInfo.descendingMap());
+
+      for (int i=0; i< players.size(); i++) {
+         String [] cells = players.get(i).trim().split(" ");
+         System.out.println("------------------------------");
+         System.out.println("Player "+players.get(i)+" accounted for\n");
+         int tempModifier = 99;
+         try { 
+            tempModifier = Integer.valueOf(cells[0]); //see if the input included a modifier
+         }
+         catch (NumberFormatException e) {
+            for (Player temp : playerObjects) {
+               if (temp.equals(cells[0])) {tempModifier = temp.initiative; System.out.println("MATCHCHES FOUDES"); }
+            }
+         }
+         System.out.println("THE MATCHING MODIFIER IS "+tempModifier);
+         do { value = rand.nextInt(21); System.out.println("Reroll?");}     //re-rolls if we get zero or if we've already rolled the value
+         while (value == 0 || (numbers.contains(value-tempModifier)) ); 
+
+         if (cells.length > 1) { //tests to see if there is another element with the name (e.g [2,Kath's-Dragon]
+            System.out.println(cells[1]+" has initiative modifier "+cells[0]);
+            System.out.println("----------------------------------");
+            
+            value = value + Integer.valueOf(cells[0]);
+            numbers.add(value);
+            System.out.println("Shit getting added: "+value+"  "+ cells[1]);
+            fullInfo.put(value, cells[1]);
+         } 
+         else { //here we'll add modifiers for player characters  
+         String tempName = "DEFAULT";
+            if (playerNames.contains(cells[0])) {  //is it is a player
+               for (Player placeHolder: playerObjects) {
+                  if (placeHolder.equals(cells[0])) {
+                     System.out.println("\nMatch Found  "+placeHolder.toString()+"  mod=  "+placeHolder.initiative);
+                     tempName = placeHolder.toString();
+                     value = value + placeHolder.initiative;
+                     numbers.add(value);
+                  }
+               }
+            System.out.println("Shit getting added: "+value+"  "+ tempName);
+            fullInfo.put(value, tempName);  
+            }
+         }
+      }  //    Kathleen, Kholo, Megan,2 skel, 3 but, bitt-1,bitt-2,bitt-3,bitt-4,bitt-5,meth-1,meth-2,meth-3 
+      //actually making the init order
+      System.out.println("\nInitiative order is as follows\n");
       for (int key : fullInfo.descendingMap().keySet() ) {
          System.out.print(key+"  "+ fullInfo.get(key).trim() +" | ");
          initOrder.add(fullInfo.get(key).trim());
       }
+      initiative = true;      
    }
+   
    public void addEnemies() { 
-      System.out.println("\ncheck 2.2");
+      TreeMap<Integer,String> fullInfo = new TreeMap<Integer, String>(); //will hold the player/monster and final dice roll, basically a dictionary
       ArrayList<Integer> numbers = new ArrayList<Integer>();
-//       int n = getEnemies().length;
       int value;
-      TreeMap<Integer,String> fullInfo = new TreeMap<Integer, String>();
-      for (int i=0;i<this.enemies.size();i++) {
-         do { value = rand.nextInt(21); }
-         while (value ==0 || (numbers.contains(value)) ); 
-         numbers.add(value);
-         fullInfo.put(value,enemies.get(i));
-      }
-      System.out.println(String.join(",,",enemies)+"\n"+numbers.toString());
-      System.out.println(fullInfo.descendingMap());
+
+      for (int i=0; i< enemies.size(); i++) {
+         String [] cells = enemies.get(i).trim().split(" ");
+         System.out.println("------------------------------");
+         System.out.println("Enemies "+enemies.get(i)+" accounted for\n");
+         int tempModifier = 99;
+         try { 
+            tempModifier = Integer.valueOf(cells[0]); //see if the input included a modifier
+         }
+         catch (NumberFormatException e) {
+            for (Player temp : playerObjects) {
+               if (temp.equals(cells[0])) {tempModifier = temp.initiative; System.out.println("MATCHCHES FOUDES"); }
+            }
+         }
+         System.out.println("THE MATCHING MODIFIER IS "+tempModifier);
+         do { value = rand.nextInt(21); System.out.println("Reroll?");}     //re-rolls if we get zero or if we've already rolled the value
+         while (value == 0 || (numbers.contains(value-tempModifier)) ); 
+
+         if (cells.length > 1) { //tests to see if there is another element with the name (e.g [2,Kath's-Dragon]
+            System.out.println(cells[1]+" has initiative modifier "+cells[0]);
+            System.out.println("----------------------------------");
+            
+            value = value + Integer.valueOf(cells[0]);
+            numbers.add(value);
+            System.out.println("Shit getting added: "+value+"  "+ cells[1]);
+            fullInfo.put(value, cells[1]);
+         } 
+         else { //here we'll add modifiers for player characters  
+         String tempName = "DEFAULT";
+            if (playerNames.contains(cells[0])) {  //is it is a player
+               for (Player placeHolder: playerObjects) {
+                  if (placeHolder.equals(cells[0])) {
+                     System.out.println("\nMatch Found  "+placeHolder.toString()+"  mod=  "+placeHolder.initiative);
+                     tempName = placeHolder.toString();
+                     value = value + placeHolder.initiative;
+                     numbers.add(value);
+                  }
+               }
+            System.out.println("Shit getting added: "+value+"  "+ tempName);
+            fullInfo.put(value, tempName);  
+            }
+         }
+      }  //    Kathleen, Kholo, Megan,2 skel, 3 but, bitt-1,bitt-2,bitt-3,bitt-4,bitt-5,meth-1,meth-2,meth-3 
+      //actually making the init order
+      System.out.println("\nInitiative order is as follows\n");
       for (int key : fullInfo.descendingMap().keySet() ) {
-         System.out.print(key+"  "+ fullInfo.get(key).trim() +" | ");
-         initOrder.add(fullInfo.get(key).trim());
+        System.out.print(key+"  "+ fullInfo.get(key).trim() +" | ");
+        initOrder.add(fullInfo.get(key).trim());
+
       }
-      initiative = true;
+      initiative = true;      
    }
    public void addCombatants() { //gonna need to break up combatants array into cells
       TreeMap<Integer,String> fullInfo = new TreeMap<Integer, String>(); //will hold the player/monster and final dice roll, basically a dictionary
       ArrayList<Integer> numbers = new ArrayList<Integer>();
       int value;
-
 
       for (int i=0; i< combatants.size(); i++) {
          String [] cells = combatants.get(i).trim().split(" ");
@@ -372,12 +444,12 @@ public class Dice extends JFrame {
             fullInfo.put(value, tempName);  
             }
          }
-      }   
+      }  //    Kathleen, Kholo, Megan,2 skel, 3 but, bitt-1,bitt-2,bitt-3,bitt-4,bitt-5,meth-1,meth-2,meth-3 
       //actually making the init order
       System.out.println("\nInitiative order is as follows\n");
       for (int key : fullInfo.descendingMap().keySet() ) {
-      System.out.print(key+"  "+ fullInfo.get(key).trim() +" | ");
-      initOrder.add(fullInfo.get(key).trim());
+        System.out.print(key+"  "+ fullInfo.get(key).trim() +" | ");
+        initOrder.add(fullInfo.get(key).trim());
 
       }
       initiative = true;      
@@ -819,11 +891,8 @@ public class Dice extends JFrame {
                   }
                }
                System.out.println("array after "+Arrays.toString(temp3));
-
-               
-               
+                     
                Collections.addAll(combatants, temp3);
-//                combatants = getInputFromUser();
                messageField.append("Coolios.\n");
                enemiesGotten = true;
                playersGotten = true;
@@ -833,18 +902,42 @@ public class Dice extends JFrame {
             
             if (!playersGotten && !lessThanTwenty) {
                messageField.append("Enter in all combatants\n");
-               if (!lessThanTwenty) {
-                  System.out.println("More than twenty");
-                  Collections.addAll(players, getInputFromUser());
-//                   players = getInputFromUser();
-                  messageField.append("Enter in the enemy names now\n");
-                  playersGotten = true;
-                  addPlayers();
+               System.out.println("Less than twenty, getting players");
+               String [] temp3 = getInputFromUser(); //need to test if these all have initiative mods or are player names
+               System.out.println("array before: "+Arrays.toString(temp3));
+               for (int i=0; i<temp3.length;i++) {
+                  if (playerNames.contains(temp3[i])) {continue;}
+                  else if (temp3[i].split(" ").length ==1) { 
+                     try { 
+                         Integer.parseInt(temp3[i].split(" ")[0]); }
+                     catch(NumberFormatException errorCode) {
+                      temp3[i] = "0 "+temp3[i]; }
+                  }
                }
+               System.out.println("array after "+Arrays.toString(temp3));
+                     
+               Collections.addAll(players, temp3);
+               messageField.append("Enter in the enemy names now\n");
+               playersGotten = true;
+               addPlayers();
+            
             }
             else if (!enemiesGotten && !lessThanTwenty) {
-               Collections.addAll(enemies, getInputFromUser());
-//                enemies = getInputFromUser();
+               System.out.println("More than twenty, enemines first");
+               String [] temp3 = getInputFromUser(); //need to test if these all have initiative mods or are player names
+               System.out.println("array before: "+Arrays.toString(temp3));
+               for (int i=0; i<temp3.length;i++) {
+                  if (playerNames.contains(temp3[i])) {continue;}
+                  else if (temp3[i].split(" ").length ==1) { 
+                     try { 
+                         Integer.parseInt(temp3[i].split(" ")[0]); }
+                     catch(NumberFormatException errorCode) {
+                      temp3[i] = "0 "+temp3[i]; }
+                  }
+               }
+               System.out.println("array after "+Arrays.toString(temp3));
+                     
+               Collections.addAll(enemies, temp3);               
                messageField.append("Coolios.\n");
                enemiesGotten = true;
                addEnemies();
